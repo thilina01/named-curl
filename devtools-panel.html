@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Named Curl DevTools Panel</title>
+  <link rel="stylesheet" href="devtools-panel.css">
+</head>
+<body>
+  <div class="panel-shell">
+    <header class="panel-header">
+      <div>
+        <h1>Named Curl</h1>
+        <p>Capture requests from DevTools and save them into your workspace.</p>
+      </div>
+      <div class="panel-actions">
+        <button id="clearRequestsBtn" class="btn btn-secondary" type="button">Clear List</button>
+        <button id="openWorkspaceBtn" class="btn btn-primary" type="button">Open Workspace</button>
+      </div>
+    </header>
+
+    <div class="panel-toolbar">
+      <input id="requestSearchInput" class="search-input" type="text" placeholder="Filter captured requests...">
+      <label class="toolbar-filter-toggle" for="filterFetchXhrToggle">
+        <input id="filterFetchXhrToggle" type="checkbox">
+        <span>Fetch/XHR only</span>
+      </label>
+      <div class="panel-status-wrap">
+        <span id="captureCount" class="capture-count">0 requests</span>
+        <span id="captureStatus" class="capture-status">Listening for network requests.</span>
+      </div>
+    </div>
+
+    <div class="panel-layout">
+      <aside class="request-list-pane">
+        <div id="requestList" class="request-list"></div>
+      </aside>
+
+      <main class="request-detail-pane">
+        <div id="emptyState" class="empty-state">
+          <h2>No request selected</h2>
+          <p>Select a captured request from the list to inspect it and save it to Named Curl.</p>
+          <p class="empty-note">If DevTools was opened after the page had already loaded, reload once to capture the full request list.</p>
+        </div>
+
+        <div id="detailView" class="detail-view hidden">
+          <div class="detail-topbar">
+            <div class="detail-summary">
+              <span id="detailMethodBadge" class="method-badge">GET</span>
+              <div class="detail-title-wrap">
+                <div id="detailUrl" class="detail-url"></div>
+                <div class="detail-meta">
+                  <span id="detailStatus" class="detail-chip">Pending</span>
+                  <span id="detailTiming" class="detail-chip">0 ms</span>
+                </div>
+              </div>
+            </div>
+            <div class="detail-actions">
+              <button id="saveRequestBtn" class="btn btn-primary" type="button">Add To Named Curl</button>
+              <button id="saveOpenRequestBtn" class="btn btn-secondary" type="button">Add And Open</button>
+            </div>
+          </div>
+
+          <div class="detail-form-row">
+            <label for="commandNameInput">Command Name</label>
+            <input id="commandNameInput" type="text" placeholder="Generated from request URL">
+          </div>
+
+          <div class="detail-grid">
+            <section class="detail-card">
+              <div class="detail-card-header">
+                <h3>Request Headers</h3>
+              </div>
+              <pre id="requestHeadersContent" class="code-block">No request headers.</pre>
+            </section>
+
+            <section class="detail-card">
+              <div class="detail-card-header">
+                <h3>Request Body</h3>
+              </div>
+              <pre id="requestBodyContent" class="code-block">No request body.</pre>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script type="module" src="devtools/panel.js"></script>
+</body>
+</html>

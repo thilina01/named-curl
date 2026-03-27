@@ -1,0 +1,9 @@
+{
+  "name": "named-curl",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --experimental-vm-modules tests/syntax-check.js",
+    "test": "node tests/shared.test.js"
+  }
+}

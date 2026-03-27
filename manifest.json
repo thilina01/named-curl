@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Named Curl",
+  "version": "1.0",
+  "description": "Define and execute named API requests (curls) directly from the browser.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Named Curl"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "devtools_page": "devtools.html",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}

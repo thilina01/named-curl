@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Named Curl - Workspace</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="sidebar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="4 17 10 11 4 5"></polyline>
+        <line x1="12" y1="19" x2="20" y2="19"></line>
+      </svg>
+      <h2>Named Curl</h2>
+    </div>
+    <div class="sidebar-search">
+      <input type="text" id="searchInput" placeholder="Search commands...">
+    </div>
+    <ul id="commandList"></ul>
+    <div class="sidebar-primary-actions">
+      <button id="newCommandBtn" class="btn btn-primary sidebar-new-btn">+ New Command</button>
+      <button id="openVariablesModalBtn" class="btn btn-secondary sidebar-variables-btn">Variables</button>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-tools">
+        <button id="importCommandsBtn" class="btn btn-secondary btn-compact">Import</button>
+        <button id="exportCommandsBtn" class="btn btn-secondary btn-compact">Export</button>
+      </div>
+      <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
+      <div id="importExportMsg" class="sidebar-msg"></div>
+      <div class="theme-toggle">
+        <span class="theme-toggle-icon" aria-hidden="true" title="Light mode">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+        </span>
+        <label class="theme-switch">
+          <input type="checkbox" id="themeToggle">
+          <span class="theme-slider"></span>
+        </label>
+        <span class="theme-toggle-icon" aria-hidden="true" title="Dark mode">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3c0.3 0 0.6 0.02 0.89 0.07A7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- Editor Panel (top) -->
+    <div id="editorPanel" class="editor-panel hidden">
+      <div class="editor-scroll">
+        <div class="editor-header">
+          <div class="editor-header-left">
+            <h3 id="editorTitle">Edit Command</h3>
+          </div>
+          <div class="editor-header-actions">
+            <button id="deleteBtn" class="btn btn-danger hidden">Delete</button>
+            <button type="button" id="closeEditorModalBtn" class="btn btn-secondary">Close</button>
+          </div>
+        </div>
+
+        <div id="editorContent" class="editor-content">
+          <form id="commandForm">
+            <div class="form-group">
+              <label for="name">Command Name</label>
+              <input type="text" id="name" required placeholder="e.g. Get User List">
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 0 0 120px;">
+                <label for="method">Method</label>
+                <select id="method">
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="DELETE">DELETE</option>
+                  <option value="PATCH">PATCH</option>
+                  <option value="OPTIONS">OPTIONS</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label for="url">URL</label>
+                <input type="url" id="url" required placeholder="https://api.example.com/v1/resource or paste a curl command">
+                <div class="input-hint">Paste a full cURL command here to auto-fill method, URL, headers, and body.</div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group" style="flex: 1;">
+                <label>Headers</label>
+                <div class="headers-editor">
+                  <div class="headers-toolbar">
+                    <button type="button" id="addHeaderBtn" class="btn btn-secondary btn-inline">+ Add</button>
+                  </div>
+                  <div id="headersList" class="headers-list"></div>
+                </div>
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label for="body">Body</label>
+                <textarea id="body" rows="3" placeholder="Request payload..."></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="saveBtn">Save</button>
+              <button type="button" class="btn btn-send" id="sendBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+                Send
+              </button>
+              <div id="saveMsg" class="save-msg">Saved!</div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div id="variablesModal" class="editor-panel hidden">
+      <div class="editor-scroll variables-modal-scroll">
+        <div class="editor-header">
+          <div class="editor-header-left">
+            <h3>Variables</h3>
+          </div>
+          <div class="editor-header-actions">
+            <button id="addVariableBtn" type="button" class="btn btn-secondary">+ Add</button>
+            <button type="button" id="closeVariablesModalBtn" class="btn btn-secondary">Close</button>
+          </div>
+        </div>
+        <div class="variables-panel variables-panel-modal">
+          <div id="variablesList" class="variables-list"></div>
+          <div class="variables-hint">Use <strong>$VAR</strong> or <strong>${VAR}</strong> in URL, headers, and body. Auto-populated variables show their response source below the row.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="jsonVariableModal" class="editor-panel hidden">
+      <div class="editor-scroll json-variable-modal-scroll">
+        <div class="editor-header">
+          <div class="editor-header-left">
+            <h3 id="jsonVariableModalTitle">Save Response Value</h3>
+          </div>
+          <div class="editor-header-actions">
+            <button type="button" id="cancelJsonVariableBtn" class="btn btn-secondary">Cancel</button>
+          </div>
+        </div>
+        <div class="editor-content">
+          <div class="form-group">
+            <label for="jsonVariablePath">Response Path</label>
+            <input type="text" id="jsonVariablePath" readonly>
+          </div>
+          <div class="form-group">
+            <label for="jsonVariableValuePreview">Value</label>
+            <textarea id="jsonVariableValuePreview" rows="5" readonly></textarea>
+          </div>
+          <div id="jsonVariableExistingGroup" class="form-group hidden">
+            <label for="jsonVariableSelect">Existing Variable</label>
+            <select id="jsonVariableSelect"></select>
+          </div>
+          <div id="jsonVariableNewGroup" class="form-group hidden">
+            <label for="jsonVariableName">New Variable Name</label>
+            <input type="text" id="jsonVariableName" placeholder="e.g. USER_ID">
+          </div>
+          <div class="json-variable-auto-group">
+            <label class="checkbox-row" for="jsonVariableAutoPopulate">
+              <input type="checkbox" id="jsonVariableAutoPopulate">
+              <span>Auto-populate from this request on future runs</span>
+            </label>
+            <div id="jsonVariableAutoHint" class="checkbox-hint"></div>
+          </div>
+          <div id="jsonVariableModalMsg" class="modal-inline-msg"></div>
+          <div class="form-actions">
+            <button type="button" id="saveJsonVariableBtn" class="btn btn-primary">Save Variable</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resizer -->
+    <div id="panelResizer" class="panel-resizer hidden">
+      <div class="resizer-handle"></div>
+    </div>
+
+    <!-- Response Panel (bottom) -->
+    <div id="responsePanel" class="response-panel">
+      <div class="response-header">
+        <div class="response-header-left">
+          <div class="response-title-block">
+            <h3>Response <span id="executedRequestName" class="response-command-name">-</span></h3>
+            <span id="executedRequestUrl" class="request-url">-</span>
+          </div>
+          <span id="executedMethodBadge" class="item-badge executed-method-badge hidden">GET</span>
+          <span id="statusBadge" class="status-badge hidden"></span>
+          <span id="responseTime" class="time-badge hidden"></span>
+        </div>
+        <div class="response-header-right">
+          <button type="button" id="responseEditToggleBtn" class="btn btn-secondary btn-response-edit hidden">Edit</button>
+          <div class="response-header-actions">
+            <button type="button" id="responseResendBtn" class="btn btn-secondary btn-response-action hidden">Resend</button>
+            <button type="button" id="responseRefreshVarsBtn" class="btn btn-secondary btn-response-action hidden">Refresh Vars</button>
+          </div>
+          <input type="text" id="responseSearchInput" class="response-search" placeholder="Search response...">
+          <div class="response-tabs">
+            <button class="tab active" data-target="resBody">Body</button>
+            <button class="tab hidden" id="previewTab" data-target="resPreview">Preview</button>
+            <button class="tab" data-target="resHeaders">Headers</button>
+            <button class="tab" data-target="reqHeaders">Req Headers</button>
+            <button class="tab" data-target="reqBody">Req Body</button>
+          </div>
+        </div>
+      </div>
+      <div id="resBody" class="tab-content active">
+        <div id="resBodyContent" class="code-block response-body-text">Send a request to see the response here.</div>
+      </div>
+      <div id="resPreview" class="tab-content hidden">
+        <iframe id="resPreviewFrame" class="preview-frame" sandbox="allow-same-origin"></iframe>
+      </div>
+      <div id="resHeaders" class="tab-content hidden">
+        <div id="resHeadersContent" class="code-block response-body-text">No headers.</div>
+      </div>
+      <div id="reqHeaders" class="tab-content hidden">
+        <div id="reqHeadersContent" class="code-block response-body-text">No request headers.</div>
+      </div>
+      <div id="reqBody" class="tab-content hidden">
+        <div id="reqBodyContent" class="code-block response-body-text">No request body.</div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="emptySelectMsg" class="empty-select hidden">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-placeholder); margin-bottom: 16px;">
+        <polyline points="4 17 10 11 4 5"></polyline>
+        <line x1="12" y1="19" x2="20" y2="19"></line>
+      </svg>
+      <p>Select a command or create a new one.</p>
+    </div>
+
+    <div id="jsonVariableMenu" class="json-variable-menu hidden" role="menu" aria-label="JSON variable actions">
+      <button type="button" class="json-variable-menu-item" id="copyJsonValueBtn">Copy Value</button>
+      <button type="button" class="json-variable-menu-item" data-mode="new">Save to New Variable</button>
+      <button type="button" class="json-variable-menu-item" id="saveToExistingVariableBtn" data-mode="existing">Save to Existing Variable</button>
+    </div>
+  </div>
+
+  <script type="module" src="options/index.js"></script>
+</body>
+</html>
