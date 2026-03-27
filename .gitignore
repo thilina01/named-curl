@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Package manager logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Test and coverage output
+coverage/
+.nyc_output/
+
+# Build caches and temp files
+.cache/
+.eslintcache
+*.tmp
+*.temp
+tmp/
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Browser extension packaging artifacts and signing keys
+*.zip
+*.crx
+*.pem
+
+# Runtime and diagnostic files
+*.log
+*.pid
+*.pid.lock
+
+# Editor and IDE files
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.iml
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Miscellaneous local files
+*.swp
+*.swo
+*~
