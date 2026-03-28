@@ -72,8 +72,18 @@ Named Curl is a Chrome extension for saving named HTTP requests, executing them 
 
 - `scripts/tag.sh`: local version bump and tagging helper for GitHub releases
 - `.github/workflows/release.yml`: tag-driven GitHub Release packaging and publishing workflow
+- `.github/workflows/pages.yml`: GitHub Pages deployment for the public privacy policy site
 - `CHROME_WEB_STORE.md`: Chrome Web Store submission notes, permission rationale, and release checklist
 - `PRIVACY.md`: privacy policy draft for hosting before store submission
+
+### Public Privacy Policy
+
+The repository includes a small GitHub Pages site under `docs/`.
+
+- Privacy policy page: `docs/privacy-policy/index.html`
+- Expected public URL: `https://thilina01.github.io/named-curl/privacy-policy/`
+
+After the Pages workflow runs successfully, enable GitHub Pages in the repository settings if GitHub has not already done so for the workflow-based deployment.
 
 ### GitHub Release Flow
 

@@ -70,6 +70,7 @@ jobs:
           zip -qr "$ZIP_PATH" . \
             -x '.git/*' \
             -x '.github/*' \
+            -x 'docs/*' \
             -x 'node_modules/*' \
             -x 'dist/*' \
             -x 'tests/*' \

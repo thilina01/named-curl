@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Named Curl Privacy Policy</title>
+  <meta name="description" content="Privacy policy for the Named Curl Chrome extension.">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef5f8;
+      --panel: rgba(255, 255, 255, 0.92);
+      --text: #183347;
+      --muted: #4c6779;
+      --accent: #0b6e8a;
+      --border: rgba(24, 51, 71, 0.12);
+      --shadow: 0 24px 60px rgba(10, 34, 50, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(135, 230, 255, 0.45), transparent 24%),
+        radial-gradient(circle at bottom right, rgba(11, 110, 138, 0.16), transparent 34%),
+        var(--bg);
+      padding: 28px;
+    }
+
+    .shell {
+      width: min(880px, 100%);
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: clamp(24px, 4vw, 44px);
+      backdrop-filter: blur(10px);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 14px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(11, 110, 138, 0.1);
+      color: var(--accent);
+      font: 600 0.82rem/1 "Segoe UI", "Helvetica Neue", sans-serif;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    h1, h2 {
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+      letter-spacing: -0.02em;
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 4vw, 3.4rem);
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      margin-top: 36px;
+      margin-bottom: 12px;
+      font-size: 1.35rem;
+    }
+
+    p, li {
+      font-size: 1.06rem;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 22px;
+    }
+
+    a {
+      color: var(--accent);
+      font-weight: 600;
+      text-underline-offset: 0.18em;
+    }
+
+    .lede {
+      font-size: 1.12rem;
+      max-width: 60ch;
+    }
+
+    .meta {
+      margin-top: 22px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      font: 0.96rem/1.6 "Segoe UI", "Helvetica Neue", sans-serif;
+      color: var(--muted);
+    }
+
+    .home-link {
+      display: inline-flex;
+      margin-bottom: 18px;
+      font: 600 0.95rem/1 "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="panel">
+      <a class="home-link" href="../">Named Curl</a>
+      <div class="eyebrow">Privacy Policy</div>
+      <h1>Named Curl Privacy Policy</h1>
+      <p class="lede">Named Curl stores user-defined request data locally in the browser and executes requests directly from the extension. The extension does not operate a remote backend and does not include analytics, advertising, or telemetry code.</p>
+
+      <h2>Data Stored Locally</h2>
+      <p>The extension stores the following data on the user's device with Chrome local extension storage:</p>
+      <ul>
+        <li>Saved commands, including request names, methods, URLs, headers, bodies, and tags</li>
+        <li>Variables and variable bindings used to populate requests from prior responses</li>
+        <li>UI preferences such as theme selection</li>
+      </ul>
+      <p>The DevTools panel also stores a small amount of panel-specific UI state in browser local storage, such as filter toggles.</p>
+
+      <h2>Network Activity</h2>
+      <p>When a user runs a command, the extension sends the configured HTTP request directly from the browser to the target server selected by the user. The target server receives any request data the user included, such as URLs, headers, and request bodies, and can return response data to the extension.</p>
+      <p>Named Curl does not proxy requests through a developer-controlled service.</p>
+
+      <h2>Data Collection</h2>
+      <p>Named Curl does not collect, sell, transmit, or share extension data with the developer or other third parties, except for the direct network requests that the user explicitly initiates to their chosen destinations.</p>
+
+      <h2>Permissions</h2>
+      <p>The extension requests these permissions for the following reasons:</p>
+      <ul>
+        <li><strong>storage</strong>: save commands, variables, bindings, and UI preferences locally</li>
+        <li><strong>tabs</strong>: open the options workspace from the popup and DevTools panel</li>
+        <li><strong>&lt;all_urls&gt;</strong>: allow users to send requests to arbitrary endpoints they configure</li>
+      </ul>
+
+      <h2>User Control</h2>
+      <p>Users can edit or delete saved commands and variables from the extension UI at any time. Removing the extension deletes its local extension storage from the browser.</p>
+
+      <h2>Changes</h2>
+      <p>If this privacy policy changes, update the repository's PRIVACY.md file and this public policy page together so the published policy remains accurate.</p>
+
+      <h2>Contact</h2>
+      <p>Add your public support contact details or website before using this page in a store listing.</p>
+
+      <div class="meta">
+        <div>Repository: <a href="https://github.com/thilina01/named-curl">github.com/thilina01/named-curl</a></div>
+        <div>Public policy URL pattern: <code>https://thilina01.github.io/named-curl/privacy-policy/</code></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

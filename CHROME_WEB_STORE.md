@@ -4,7 +4,7 @@ This project is close to publishable. The core manifest structure is valid for a
 
 ## Current Gaps
 
-1. Host the privacy policy from `PRIVACY.md` at a public HTTPS URL for the store listing.
+1. Publish the privacy policy page and use its public HTTPS URL in the store listing.
 2. Prepare Chrome Web Store listing assets such as screenshots and any optional promotional images.
 3. Perform a packaged-extension smoke test before upload.
 
@@ -46,7 +46,7 @@ All request data is stored locally in the browser. Requests are sent directly to
 2. Run `npm test`.
 3. Run `npm run check`.
 4. Load the unpacked extension in Chrome and verify popup, options page, request execution, and DevTools capture.
-5. Host the privacy policy at a public HTTPS URL and add that URL in the store listing.
+5. Publish the GitHub Pages privacy policy URL and add that URL in the store listing.
 6. Prepare screenshots that show the popup, options workspace, tag filtering, and DevTools capture panel.
 7. Package the extension as a zip of the extension root, excluding `.git`, `node_modules`, and other local-only files.
 

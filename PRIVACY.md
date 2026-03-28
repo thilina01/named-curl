@@ -41,3 +41,11 @@ If this privacy policy changes, update this file and the public policy URL used 
 ## Before Publishing
 
 Add your public support contact details or website before submitting to the Chrome Web Store, and host this policy at a public HTTPS URL because the Chrome Web Store review flow expects a reachable privacy policy page.
+
+## GitHub Pages
+
+This repository can publish the policy through GitHub Pages at:
+
+- `https://thilina01.github.io/named-curl/privacy-policy/`
+
+The public page content lives in `docs/privacy-policy/index.html` and is deployed by `.github/workflows/pages.yml`.
