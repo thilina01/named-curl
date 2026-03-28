@@ -10,6 +10,7 @@ import {
   createCommandId,
   loadAppState as loadNormalizedAppState,
   normalizeImportedCommand as normalizeImportedCommandShape,
+  normalizeTags as normalizeCommandTags,
   normalizeVariableBindings as normalizeStoredBindings,
   normalizeVariables as normalizeStoredVariables,
   saveCommands as persistCommands,
@@ -30,6 +31,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   let commands = [];
   let variables = [];
   let variableBindings = [];
+  let activeTagFilters = [];
+  let editingCommandTags = [];
   let currentCmdId = null;
   let searchTerm = '';
   let lastExecutedCommandId = null;
@@ -43,6 +46,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   let isResponseVarRefreshRunning = false;
 
   const commandListEl = document.getElementById('commandList');
+  const tagFilterMeta = document.getElementById('tagFilterMeta');
+  const tagFilterToggleBtn = document.getElementById('tagFilterToggleBtn');
+  const tagFilterToggleLabel = document.getElementById('tagFilterToggleLabel');
+  const tagFilterDropdown = document.getElementById('tagFilterDropdown');
+  const tagFilterSearchInput = document.getElementById('tagFilterSearchInput');
+  const tagFilterDropdownList = document.getElementById('tagFilterDropdownList');
+  const selectedTagFilterList = document.getElementById('selectedTagFilterList');
+  const clearTagFiltersBtn = document.getElementById('clearTagFiltersBtn');
   const editorPanel = document.getElementById('editorPanel');
   const responsePanel = document.getElementById('responsePanel');
   const panelResizer = document.getElementById('panelResizer');
@@ -71,6 +82,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveMsg = document.getElementById('saveMsg');
   const themeToggle = document.getElementById('themeToggle');
   const searchInput = document.getElementById('searchInput');
+  const commandTagList = document.getElementById('commandTagList');
+  const tagInput = document.getElementById('tagInput');
+  const availableTagsList = document.getElementById('availableTagsList');
   const sendBtn = document.getElementById('sendBtn');
   const variablesModal = document.getElementById('variablesModal');
   const openVariablesModalBtn = document.getElementById('openVariablesModalBtn');
@@ -103,6 +117,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     json: null,
     headers: ''
   };
+  let isTagFilterDropdownOpen = false;
+  let tagFilterSearchTerm = '';
   let pendingJsonVariableSelection = null;
   let jsonVariableMode = 'new';
 
@@ -184,6 +200,225 @@ document.addEventListener('DOMContentLoaded', async () => {
   const editId = urlParams.get('editId');
   const autoRun = urlParams.get('run') === '1';
 
+  function getAllTagsWithCounts() {
+    const counts = new Map();
+
+    commands.forEach((command) => {
+      normalizeCommandTags(command.tags).forEach((tag) => {
+        counts.set(tag, (counts.get(tag) || 0) + 1);
+      });
+    });
+
+    return Array.from(counts.entries())
+      .sort(([left], [right]) => left.localeCompare(right, undefined, { sensitivity: 'base' }))
+      .map(([tag, count]) => ({ tag, count }));
+  }
+
+  function isTagFilterActive(tag) {
+    const normalizedTag = String(tag || '').trim().toLowerCase();
+    return activeTagFilters.some((selectedTag) => selectedTag.toLowerCase() === normalizedTag);
+  }
+
+  function renderTagSuggestions() {
+    availableTagsList.innerHTML = '';
+    getAllTagsWithCounts().forEach(({ tag }) => {
+      const option = document.createElement('option');
+      option.value = tag;
+      availableTagsList.appendChild(option);
+    });
+  }
+
+  function setTagFilterDropdownOpen(isOpen) {
+    isTagFilterDropdownOpen = isOpen;
+    tagFilterDropdown.classList.toggle('hidden', !isOpen);
+    tagFilterToggleBtn.classList.toggle('open', isOpen);
+    tagFilterToggleBtn.setAttribute('aria-expanded', String(isOpen));
+
+    if (isOpen) {
+      tagFilterSearchInput.focus();
+      tagFilterSearchInput.select();
+    } else if (tagFilterSearchTerm) {
+      tagFilterSearchTerm = '';
+      tagFilterSearchInput.value = '';
+      renderTagFilters();
+    }
+  }
+
+  function renderSelectedTagFilters() {
+    selectedTagFilterList.innerHTML = '';
+
+    if (activeTagFilters.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.className = 'tag-filter-empty';
+      emptyState.textContent = 'No tag filters selected.';
+      selectedTagFilterList.appendChild(emptyState);
+      return;
+    }
+
+    activeTagFilters.forEach((tag) => {
+      const chip = document.createElement('span');
+      chip.className = 'selected-tag-chip';
+      chip.appendChild(document.createTextNode(tag));
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'selected-tag-chip-remove';
+      removeButton.setAttribute('aria-label', `Remove ${tag} filter`);
+      removeButton.textContent = 'x';
+      removeButton.addEventListener('click', () => {
+        activeTagFilters = activeTagFilters.filter((selectedTag) => selectedTag.toLowerCase() !== tag.toLowerCase());
+        renderList();
+      });
+
+      chip.appendChild(removeButton);
+      selectedTagFilterList.appendChild(chip);
+    });
+  }
+
+  function renderTagFilters() {
+    const availableTags = getAllTagsWithCounts();
+    activeTagFilters = activeTagFilters.filter((selectedTag) => (
+      availableTags.some(({ tag }) => tag.toLowerCase() === selectedTag.toLowerCase())
+    ));
+    const filteredAvailableTags = tagFilterSearchTerm
+      ? availableTags.filter(({ tag }) => tag.toLowerCase().includes(tagFilterSearchTerm))
+      : availableTags;
+
+    clearTagFiltersBtn.disabled = activeTagFilters.length === 0;
+    tagFilterMeta.textContent = activeTagFilters.length > 0
+      ? `${activeTagFilters.length} filter${activeTagFilters.length === 1 ? '' : 's'} active`
+      : availableTags.length > 0
+        ? `${availableTags.length} tag${availableTags.length === 1 ? '' : 's'} available`
+        : 'No tags yet';
+    tagFilterToggleLabel.textContent = activeTagFilters.length > 0
+      ? `${activeTagFilters.length} tag${activeTagFilters.length === 1 ? '' : 's'} selected`
+      : 'Select tags';
+
+    tagFilterDropdownList.innerHTML = '';
+    if (availableTags.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.className = 'tag-filter-empty';
+      emptyState.textContent = 'Add tags to commands to filter them here.';
+      tagFilterDropdownList.appendChild(emptyState);
+      renderSelectedTagFilters();
+      renderTagSuggestions();
+      return;
+    }
+
+    if (filteredAvailableTags.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.className = 'tag-filter-empty';
+      emptyState.textContent = 'No tags match that filter.';
+      tagFilterDropdownList.appendChild(emptyState);
+      renderSelectedTagFilters();
+      renderTagSuggestions();
+      return;
+    }
+
+    filteredAvailableTags.forEach(({ tag, count }) => {
+      const option = document.createElement('label');
+      option.className = 'tag-filter-option';
+
+      const main = document.createElement('span');
+      main.className = 'tag-filter-option-main';
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = isTagFilterActive(tag);
+      checkbox.addEventListener('change', () => {
+        if (checkbox.checked) {
+          activeTagFilters = normalizeCommandTags([...activeTagFilters, tag]);
+        } else {
+          activeTagFilters = activeTagFilters.filter((selectedTag) => selectedTag.toLowerCase() !== tag.toLowerCase());
+        }
+        renderList();
+      });
+
+      const label = document.createElement('span');
+      label.className = 'tag-filter-option-label';
+      label.textContent = tag;
+
+      const countEl = document.createElement('span');
+      countEl.className = 'tag-filter-option-count';
+      countEl.textContent = String(count);
+
+      main.appendChild(checkbox);
+      main.appendChild(label);
+      option.appendChild(main);
+      option.appendChild(countEl);
+      tagFilterDropdownList.appendChild(option);
+    });
+
+    renderSelectedTagFilters();
+    renderTagSuggestions();
+  }
+
+  function setEditingCommandTags(tags) {
+    editingCommandTags = normalizeCommandTags(tags);
+    renderEditingCommandTags();
+  }
+
+  function renderEditingCommandTags() {
+    commandTagList.innerHTML = '';
+
+    editingCommandTags.forEach((tag) => {
+      const pill = document.createElement('span');
+      pill.className = 'tag-pill';
+      pill.appendChild(document.createTextNode(tag));
+
+      const removeButton = document.createElement('button');
+      removeButton.type = 'button';
+      removeButton.className = 'tag-pill-remove';
+      removeButton.setAttribute('aria-label', `Remove ${tag}`);
+      removeButton.textContent = 'x';
+      removeButton.addEventListener('click', () => {
+        editingCommandTags = editingCommandTags.filter((existingTag) => existingTag.toLowerCase() !== tag.toLowerCase());
+        renderEditingCommandTags();
+      });
+
+      pill.appendChild(removeButton);
+      commandTagList.appendChild(pill);
+    });
+
+    renderTagSuggestions();
+  }
+
+  function addEditingTags(rawTags) {
+    const nextTags = normalizeCommandTags(rawTags);
+    if (nextTags.length === 0) {
+      tagInput.value = '';
+      return;
+    }
+
+    editingCommandTags = normalizeCommandTags([...editingCommandTags, ...nextTags]);
+    tagInput.value = '';
+    renderEditingCommandTags();
+  }
+
+  function commitTagInput() {
+    const rawValue = String(tagInput.value || '').trim();
+    if (!rawValue) return;
+    addEditingTags(rawValue);
+  }
+
+  function commandMatchesFilters(command) {
+    const tags = normalizeCommandTags(command.tags);
+    const matchesTags = activeTagFilters.length === 0
+      ? true
+      : activeTagFilters.every((selectedTag) => tags.some((tag) => tag.toLowerCase() === selectedTag.toLowerCase()));
+
+    if (!matchesTags) {
+      return false;
+    }
+
+    if (!searchTerm) {
+      return true;
+    }
+
+    const haystack = [command.name, command.url, ...tags].join(' ').toLowerCase();
+    return haystack.includes(searchTerm);
+  }
+
   // ========== LOAD COMMANDS ==========
   async function loadCommands() {
     const state = await loadNormalizedAppState();
@@ -193,6 +428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     applyTheme(state.theme || DEFAULT_THEME);
     setVariableRows(variables);
+    renderTagSuggestions();
     updateResponseHeaderActions();
     renderList();
 
@@ -220,24 +456,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderList();
   });
 
+  clearTagFiltersBtn.addEventListener('click', () => {
+    activeTagFilters = [];
+    renderList();
+  });
+
+  tagFilterToggleBtn.addEventListener('click', () => {
+    setTagFilterDropdownOpen(!isTagFilterDropdownOpen);
+  });
+
+  tagFilterSearchInput.addEventListener('input', (event) => {
+    tagFilterSearchTerm = String(event.target.value || '').trim().toLowerCase();
+    renderTagFilters();
+  });
+
+  tagInput.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ',') return;
+    event.preventDefault();
+    commitTagInput();
+  });
+
+  tagInput.addEventListener('blur', () => {
+    commitTagInput();
+  });
+
   responseSearchInput.addEventListener('input', () => {
     renderResponseBody(responseState);
   });
 
   // ========== RENDER LIST ==========
   function renderList() {
+    renderTagFilters();
     commandListEl.innerHTML = '';
-    const filtered = searchTerm
-      ? commands.filter(c => c.name.toLowerCase().includes(searchTerm) || c.url.toLowerCase().includes(searchTerm))
-      : commands;
+    const filtered = commands.filter((command) => commandMatchesFilters(command));
+
+    if (filtered.length === 0) {
+      const emptyState = document.createElement('li');
+      emptyState.className = 'command-list-empty';
+      emptyState.textContent = activeTagFilters.length > 0 || searchTerm
+        ? 'No commands match the current search and tag filters.'
+        : 'No commands yet.';
+      commandListEl.appendChild(emptyState);
+      return;
+    }
 
     filtered.forEach(cmd => {
+      const tagMarkup = normalizeCommandTags(cmd.tags).length > 0
+        ? `<div class="item-tags">${normalizeCommandTags(cmd.tags)
+          .map((tag) => `<span class="item-tag">${escapeHtml(tag)}</span>`)
+          .join('')}</div>`
+        : '';
       const li = document.createElement('li');
       li.className = `list-item ${cmd.id === currentCmdId ? 'active' : ''}`;
       li.innerHTML = `
         <div class="list-item-info">
           <span class="item-title">${escapeHtml(cmd.name)}</span>
           <span class="item-url">${escapeHtml(cmd.url || '')}</span>
+          ${tagMarkup}
         </div>
         <span class="item-badge item-method-badge badge-${cmd.method}">${cmd.method}</span>
         <div class="list-item-actions">
@@ -296,6 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     editorTitle.textContent = 'Edit Command';
 
     nameInp.value = cmd.name || '';
+  setEditingCommandTags(cmd.tags || []);
     methodInp.value = cmd.method || 'GET';
     urlInp.value = cmd.url || '';
     setHeaderRows(cmd.headers || []);
@@ -478,15 +754,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   document.addEventListener('click', (event) => {
+    if (isTagFilterDropdownOpen && !tagFilterToggleBtn.contains(event.target) && !tagFilterDropdown.contains(event.target)) {
+      setTagFilterDropdownOpen(false);
+    }
     if (!jsonVariableMenu.classList.contains('hidden') && !jsonVariableMenu.contains(event.target)) {
       hideJsonVariableMenu();
     }
   });
 
-  document.addEventListener('scroll', hideJsonVariableMenu, true);
+  document.addEventListener('scroll', (event) => {
+    if (isTagFilterDropdownOpen && tagFilterDropdown.contains(event.target)) {
+      return;
+    }
+    setTagFilterDropdownOpen(false);
+    hideJsonVariableMenu();
+  }, true);
 
   document.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
+    if (isTagFilterDropdownOpen) {
+      setTagFilterDropdownOpen(false);
+      return;
+    }
     if (!jsonVariableMenu.classList.contains('hidden')) {
       hideJsonVariableMenu();
       return;
@@ -562,6 +851,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     deleteBtn.classList.add('hidden');
     editorTitle.textContent = 'New Command';
     commandForm.reset();
+    setEditingCommandTags([]);
     setHeaderRows([]);
   });
 
@@ -657,9 +947,13 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
 
       commands = normalizedCommands;
+      activeTagFilters = activeTagFilters.filter((selectedTag) => (
+        commands.some((command) => normalizeCommandTags(command.tags).some((tag) => tag.toLowerCase() === selectedTag.toLowerCase()))
+      ));
       variables = normalizeStoredVariables(parsed && typeof parsed === 'object' ? parsed.variables : []);
       variableBindings = normalizeStoredBindings(parsed && typeof parsed === 'object' ? parsed.variableBindings : [], normalizedCommands);
       currentCmdId = null;
+      setEditingCommandTags([]);
       renderList();
       responseEditToggleBtn.classList.add('hidden');
       closeEditorModal();
@@ -694,6 +988,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       name: nameInp.value,
       method: methodInp.value,
       url: urlInp.value,
+      tags: [...editingCommandTags],
       headers: serializeHeaderRows(),
       body: bodyInp.value
     };
@@ -776,6 +1071,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       name: nameInp.value,
       method: methodInp.value,
       url: urlInp.value,
+      tags: [...editingCommandTags],
       headers: serializeHeaderRows(),
       body: bodyInp.value
     };
@@ -1131,6 +1427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       name: String(cmd?.name || ''),
       method: String(cmd?.method || 'GET').toUpperCase(),
       url: String(cmd?.url || ''),
+      tags: normalizeCommandTags(cmd?.tags),
       headers: Array.isArray(cmd?.headers)
         ? cmd.headers.map((header) => ({ key: String(header?.key || ''), value: String(header?.value || '') }))
         : [],

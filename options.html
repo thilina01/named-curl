@@ -14,6 +14,28 @@
       </svg>
       <h2>Named Curl</h2>
     </div>
+    <div class="sidebar-tag-panel">
+      <div class="sidebar-tag-header">
+        <div>
+          <div class="sidebar-section-title">Tags</div>
+          <div id="tagFilterMeta" class="sidebar-section-meta">All commands</div>
+        </div>
+        <button id="clearTagFiltersBtn" type="button" class="btn btn-secondary btn-inline sidebar-tag-clear">Clear</button>
+      </div>
+      <div class="tag-filter-control">
+        <button id="tagFilterToggleBtn" type="button" class="tag-filter-toggle" aria-haspopup="listbox" aria-expanded="false">
+          <span id="tagFilterToggleLabel">Select tags</span>
+          <span class="tag-filter-toggle-caret" aria-hidden="true">v</span>
+        </button>
+        <div id="tagFilterDropdown" class="tag-filter-dropdown hidden">
+          <div class="tag-filter-dropdown-search-wrap">
+            <input type="text" id="tagFilterSearchInput" class="tag-filter-dropdown-search" placeholder="Filter tags..." aria-label="Filter tags">
+          </div>
+          <div id="tagFilterDropdownList" class="tag-filter-dropdown-list" role="listbox" aria-multiselectable="true"></div>
+        </div>
+        <div id="selectedTagFilterList" class="selected-tag-filter-list"></div>
+      </div>
+    </div>
     <div class="sidebar-search">
       <input type="text" id="searchInput" placeholder="Search commands...">
     </div>
@@ -75,6 +97,15 @@
             <div class="form-group">
               <label for="name">Command Name</label>
               <input type="text" id="name" required placeholder="e.g. Get User List">
+            </div>
+
+            <div class="form-group">
+              <label for="tagInput">Tags</label>
+              <div class="tag-editor">
+                <div id="commandTagList" class="tag-pill-list"></div>
+                <input type="text" id="tagInput" class="tag-input" list="availableTagsList" placeholder="Type a tag and press Enter">
+              </div>
+              <div class="input-hint">Add multiple tags. Press Enter or comma to commit each tag.</div>
             </div>
 
             <div class="form-row">
@@ -252,6 +283,8 @@
       <button type="button" class="json-variable-menu-item" data-mode="new">Save to New Variable</button>
       <button type="button" class="json-variable-menu-item" id="saveToExistingVariableBtn" data-mode="existing">Save to Existing Variable</button>
     </div>
+
+    <datalist id="availableTagsList"></datalist>
   </div>
 
   <script type="module" src="options/index.js"></script>

@@ -23,7 +23,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   searchInput.addEventListener('input', (event) => {
     const term = String(event.target.value || '').trim().toLowerCase();
     visibleCommands = commands.filter((command) => (
-      command.name.toLowerCase().includes(term) || command.url.toLowerCase().includes(term)
+      command.name.toLowerCase().includes(term)
+      || command.url.toLowerCase().includes(term)
+      || (Array.isArray(command.tags) && command.tags.some((tag) => String(tag).toLowerCase().includes(term)))
     ));
     renderList(visibleCommands);
   });

@@ -24,6 +24,7 @@ Named Curl is a Chrome extension for saving named HTTP requests, executing them 
   "name": "Get Users",
   "method": "GET",
   "url": "https://api.example.com/users",
+  "tags": ["users", "prod"],
   "headers": [
     { "key": "Accept", "value": "application/json" }
   ],
@@ -70,5 +71,6 @@ Named Curl is a Chrome extension for saving named HTTP requests, executing them 
 ## Notes
 
 - The app stores commands in a single canonical header format: arrays of `{ key, value }`.
+- Commands can have multiple tags, and tag filtering is designed for match-all combinations.
 - Legacy result pages and the unused background execution path were removed during the maintainability refactor.
 - The extension remains build-free: plain HTML, CSS, and ES modules.

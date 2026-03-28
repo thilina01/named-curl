@@ -86,6 +86,26 @@ export function normalizeVariables(rawVariables) {
     .filter(Boolean);
 }
 
+export function normalizeTags(rawTags) {
+  const source = Array.isArray(rawTags)
+    ? rawTags
+    : typeof rawTags === 'string'
+      ? rawTags.split(/[\n,]/)
+      : [];
+
+  const seen = new Set();
+
+  return source
+    .map((tag) => String(tag ?? '').trim().replace(/\s+/g, ' '))
+    .filter((tag) => {
+      if (!tag) return false;
+      const key = tag.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
 export function normalizePathSegments(rawPath) {
   if (Array.isArray(rawPath)) {
     return rawPath
@@ -118,39 +138,53 @@ export function normalizeVariableBindings(rawBindings, sourceCommands = []) {
     .filter(Boolean);
 }
 
-export function normalizeCommand(command) {
+export function normalizeCommand(command, { legacyCollectionsById = null } = {}) {
   if (!command || typeof command !== 'object') return null;
 
   const name = String(command.name || '').trim();
   const url = String(command.url || '').trim();
   if (!name || !url) return null;
 
+  const tags = normalizeTags(command.tags);
+  const legacyCollectionId = String(command.collectionId ?? '').trim();
+  if (tags.length === 0 && legacyCollectionsById instanceof Map && legacyCollectionId) {
+    const legacyTag = String(legacyCollectionsById.get(legacyCollectionId) || '').trim();
+    if (legacyTag) {
+      tags.push(legacyTag);
+    }
+  }
+
   return {
     id: String(command.id || createCommandId()),
     name,
     method: normalizeMethod(command.method),
     url,
+    tags,
     headers: normalizeHeaders(command.headers),
     body: String(command.body || '')
   };
 }
 
-export function normalizeImportedCommand(command) {
-  return normalizeCommand(command);
+export function normalizeImportedCommand(command, options = {}) {
+  return normalizeCommand(command, options);
 }
 
 export async function loadAppState({ seedSample = true } = {}) {
   const rawState = await chrome.storage.local.get([
     STORAGE_KEYS.commands,
+    'collections',
     STORAGE_KEYS.variables,
     STORAGE_KEYS.variableBindings,
     STORAGE_KEYS.theme
   ]);
 
   let shouldPersist = false;
+  const legacyCollectionsById = buildLegacyCollectionsById(rawState.collections);
 
   let commands = Array.isArray(rawState.commands)
-    ? rawState.commands.map((command) => normalizeCommand(command)).filter(Boolean)
+    ? rawState.commands
+      .map((command) => normalizeCommand(command, { legacyCollectionsById }))
+      .filter(Boolean)
     : [];
   let variables = normalizeVariables(rawState.variables);
   let variableBindings = normalizeVariableBindings(rawState.variableBindings, commands);
@@ -211,6 +245,7 @@ function createSampleCommand() {
     name: 'Sample User List',
     url: 'https://jsonplaceholder.typicode.com/users',
     method: 'GET',
+    tags: [],
     headers: [
       {
         key: 'Accept',
@@ -256,6 +291,21 @@ function resolveBindingCommandId(binding, sourceCommands = []) {
   return match ? String(match.id || '') : '';
 }
 
+function buildLegacyCollectionsById(rawCollections) {
+  const collectionsById = new Map();
+  if (!Array.isArray(rawCollections)) return collectionsById;
+
+  rawCollections.forEach((collection) => {
+    if (!collection || typeof collection !== 'object') return;
+    const id = String(collection.id || '').trim();
+    const name = String(collection.name || '').trim();
+    if (!id || !name) return;
+    collectionsById.set(id, name);
+  });
+
+  return collectionsById;
+}
+
 function isCanonicalCommandList(rawCommands) {
   return Array.isArray(rawCommands) && rawCommands.every((command) => (
     command
@@ -264,6 +314,8 @@ function isCanonicalCommandList(rawCommands) {
     && typeof command.name === 'string'
     && typeof command.url === 'string'
     && typeof command.body === 'string'
+    && Array.isArray(command.tags)
+    && command.tags.every((tag) => typeof tag === 'string')
     && Array.isArray(command.headers)
     && !('responseBindings' in command)
   ));

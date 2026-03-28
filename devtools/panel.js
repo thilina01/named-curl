@@ -293,6 +293,7 @@ async function saveSelectedRequest(openAfterSave) {
       name: commandName,
       method: selectedRequest.method,
       url: selectedRequest.url,
+      tags: [],
       headers: importableHeaders.headers.map((header) => ({
         key: header.name,
         value: header.value

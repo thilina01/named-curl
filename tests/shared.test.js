@@ -10,6 +10,7 @@ import {
   normalizeCommand,
   normalizeHeaders,
   normalizePathSegments,
+  normalizeTags,
   normalizeVariableBindings
 } from '../shared/storage.js';
 import { formatJsonPath, serializeJsonValue } from '../shared/utils.js';
@@ -28,6 +29,7 @@ const normalizedCommand = normalizeCommand({
   name: 'Users',
   method: 'post',
   url: 'https://api.example.com/users',
+  tags: ['users', 'admin', 'users'],
   headers: '{\n  "Accept": "application/json"\n}',
   body: ''
 });
@@ -39,6 +41,23 @@ assert.deepStrictEqual(normalizedCommand.headers, [
   }
 ]);
 assert.strictEqual(normalizedCommand.method, 'POST');
+assert.deepStrictEqual(normalizedCommand.tags, ['users', 'admin']);
+
+assert.deepStrictEqual(normalizeTags('users, admin\nusers'), ['users', 'admin']);
+
+const migratedCommand = normalizeCommand({
+  id: 'cmd_legacy',
+  name: 'Legacy Users',
+  method: 'GET',
+  url: 'https://api.example.com/legacy-users',
+  collectionId: 'col_legacy',
+  headers: [],
+  body: ''
+}, {
+  legacyCollectionsById: new Map([['col_legacy', 'Legacy']])
+});
+
+assert.deepStrictEqual(migratedCommand.tags, ['Legacy']);
 
 assert.deepStrictEqual(normalizeHeaders('Authorization: Bearer token\nX-Test: 1'), [
   { key: 'Authorization', value: 'Bearer token' },
