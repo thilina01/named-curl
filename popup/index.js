@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let visibleCommands = [...commands];
 
   document.documentElement.setAttribute('data-theme', theme);
+  focusSearchInput();
 
   settingsBtn.addEventListener('click', () => {
     chrome.runtime.openOptionsPage();
@@ -18,6 +19,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   addNewBtn.addEventListener('click', () => {
     chrome.tabs.create({ url: 'options.html?action=new' });
+  });
+
+  searchInput.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      focusCommandItem(0);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      focusCommandItem(getCommandItems().length - 1);
+    }
   });
 
   searchInput.addEventListener('input', (event) => {
@@ -70,6 +84,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       itemEl.addEventListener('keydown', (event) => {
         if (event.key === 'Enter') {
           executeCommand(command.id);
+          return;
+        }
+
+        if (event.key === 'ArrowDown') {
+          event.preventDefault();
+          focusAdjacentCommandItem(itemEl, 1);
+          return;
+        }
+
+        if (event.key === 'ArrowUp') {
+          event.preventDefault();
+          focusAdjacentCommandItem(itemEl, -1);
         }
       });
 
@@ -79,5 +105,50 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function executeCommand(commandId) {
     chrome.tabs.create({ url: `options.html?action=edit&editId=${encodeURIComponent(commandId)}&run=1` });
+  }
+
+  function getCommandItems() {
+    return Array.from(listContainer.querySelectorAll('.command-item'));
+  }
+
+  function focusCommandItem(index) {
+    const items = getCommandItems();
+    if (!items.length) return;
+
+    const clampedIndex = Math.max(0, Math.min(index, items.length - 1));
+    const item = items[clampedIndex];
+    item.focus();
+    item.scrollIntoView({ block: 'nearest' });
+  }
+
+  function focusAdjacentCommandItem(currentItem, offset) {
+    const items = getCommandItems();
+    const currentIndex = items.indexOf(currentItem);
+    if (currentIndex === -1) return;
+
+    const nextIndex = currentIndex + offset;
+    if (nextIndex < 0) {
+      focusSearchInput(false);
+      return;
+    }
+
+    if (nextIndex >= items.length) {
+      focusCommandItem(items.length - 1);
+      return;
+    }
+
+    focusCommandItem(nextIndex);
+  }
+
+  function focusSearchInput(shouldSelect = true) {
+    requestAnimationFrame(() => {
+      searchInput.focus();
+      if (shouldSelect) {
+        searchInput.select();
+      } else {
+        const valueLength = searchInput.value.length;
+        searchInput.setSelectionRange(valueLength, valueLength);
+      }
+    });
   }
 });

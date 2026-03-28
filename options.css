@@ -343,6 +343,23 @@ body.modal-open {
 .list-item:hover { background-color: var(--bg-hover); }
 .list-item.active { background-color: var(--bg-active); border-left-color: var(--accent); }
 
+.list-item.keyboard-active {
+  background-color: color-mix(in srgb, var(--bg-hover) 80%, var(--bg-active));
+  border-left-color: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+
+.list-item:focus {
+  background-color: var(--bg-hover);
+  border-left-color: color-mix(in srgb, var(--accent) 65%, transparent);
+  outline: none;
+}
+
+.list-item:focus-visible {
+  background-color: var(--bg-hover);
+  border-left-color: color-mix(in srgb, var(--accent) 65%, transparent);
+  outline: none;
+}
+
 .list-item-info {
   display: flex;
   flex-direction: column;

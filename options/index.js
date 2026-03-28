@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   let activeTagFilters = [];
   let editingCommandTags = [];
   let currentCmdId = null;
+  let keyboardActiveCommandId = null;
   let searchTerm = '';
   let lastExecutedCommandId = null;
   let lastExecutedCommandSnapshot = null;
@@ -488,9 +489,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   function renderList() {
     renderTagFilters();
     commandListEl.innerHTML = '';
-    const filtered = commands.filter((command) => commandMatchesFilters(command));
+    const filtered = getFilteredCommands();
+    syncKeyboardActiveCommandId(filtered);
 
     if (filtered.length === 0) {
+      keyboardActiveCommandId = null;
       const emptyState = document.createElement('li');
       emptyState.className = 'command-list-empty';
       emptyState.textContent = activeTagFilters.length > 0 || searchTerm
@@ -507,7 +510,11 @@ document.addEventListener('DOMContentLoaded', async () => {
           .join('')}</div>`
         : '';
       const li = document.createElement('li');
-      li.className = `list-item ${cmd.id === currentCmdId ? 'active' : ''}`;
+      li.className = `list-item ${cmd.id === currentCmdId ? 'active' : ''} ${cmd.id === keyboardActiveCommandId ? 'keyboard-active' : ''}`;
+      li.tabIndex = -1;
+      li.setAttribute('role', 'button');
+      li.setAttribute('aria-selected', String(cmd.id === keyboardActiveCommandId));
+      li.dataset.commandId = cmd.id;
       li.innerHTML = `
         <div class="list-item-info">
           <span class="item-title">${escapeHtml(cmd.name)}</span>
@@ -540,27 +547,144 @@ document.addEventListener('DOMContentLoaded', async () => {
       `;
       li.addEventListener('click', (e) => {
         if (!e.target.closest('.item-action-btn')) {
+          keyboardActiveCommandId = cmd.id;
+          updateKeyboardActiveListItems();
           setCurrentCommand(cmd);
           closeEditorModal();
           sendRequest(cmd);
         }
       });
+      li.addEventListener('mousedown', (event) => {
+        if (!event.target.closest('.item-action-btn')) {
+          keyboardActiveCommandId = cmd.id;
+          updateKeyboardActiveListItems();
+        }
+      });
       li.querySelector('.item-edit-btn').addEventListener('click', (e) => {
         e.stopPropagation();
+        keyboardActiveCommandId = cmd.id;
+        updateKeyboardActiveListItems();
         selectCommand(cmd.id);
       });
       li.querySelector('.item-delete-btn').addEventListener('click', (e) => {
         e.stopPropagation();
+        keyboardActiveCommandId = cmd.id;
+        updateKeyboardActiveListItems();
         deleteCommandById(cmd.id);
       });
       li.querySelector('.item-run-btn').addEventListener('click', (e) => {
         e.stopPropagation();
+        keyboardActiveCommandId = cmd.id;
+        updateKeyboardActiveListItems();
         setCurrentCommand(cmd);
         closeEditorModal();
         sendRequest(cmd);
       });
       commandListEl.appendChild(li);
     });
+  }
+
+  function getFilteredCommands() {
+    return commands.filter((command) => commandMatchesFilters(command));
+  }
+
+  function syncKeyboardActiveCommandId(filteredCommands) {
+    if (filteredCommands.length === 0) {
+      keyboardActiveCommandId = null;
+      return;
+    }
+
+    if (filteredCommands.some((command) => command.id === keyboardActiveCommandId)) {
+      return;
+    }
+
+    if (filteredCommands.some((command) => command.id === currentCmdId)) {
+      keyboardActiveCommandId = currentCmdId;
+      return;
+    }
+
+    keyboardActiveCommandId = filteredCommands[0].id;
+  }
+
+  function getKeyboardActiveListItem() {
+    if (!keyboardActiveCommandId) return null;
+    return commandListEl.querySelector(`.list-item[data-command-id="${CSS.escape(keyboardActiveCommandId)}"]`);
+  }
+
+  function updateKeyboardActiveListItems({ scrollIntoView = false } = {}) {
+    const activeItem = getKeyboardActiveListItem();
+
+    commandListEl.querySelectorAll('.list-item').forEach((item) => {
+      const isActive = item === activeItem;
+      item.classList.toggle('keyboard-active', isActive);
+      item.setAttribute('aria-selected', String(isActive));
+    });
+
+    if (activeItem && scrollIntoView) {
+      activeItem.scrollIntoView({ block: 'nearest' });
+    }
+  }
+
+  function moveKeyboardActiveCommand(direction) {
+    const filtered = getFilteredCommands();
+    if (filtered.length === 0) return;
+
+    syncKeyboardActiveCommandId(filtered);
+    const currentIndex = filtered.findIndex((command) => command.id === keyboardActiveCommandId);
+    const baseIndex = currentIndex === -1 ? 0 : currentIndex;
+    const nextIndex = Math.max(0, Math.min(baseIndex + direction, filtered.length - 1));
+
+    keyboardActiveCommandId = filtered[nextIndex].id;
+    updateKeyboardActiveListItems({ scrollIntoView: true });
+  }
+
+  function moveKeyboardActiveCommandToEdge(edge) {
+    const filtered = getFilteredCommands();
+    if (filtered.length === 0) return;
+
+    keyboardActiveCommandId = edge === 'last'
+      ? filtered[filtered.length - 1].id
+      : filtered[0].id;
+
+    updateKeyboardActiveListItems({ scrollIntoView: true });
+  }
+
+  function executeKeyboardActiveCommand() {
+    if (!keyboardActiveCommandId) return;
+
+    const command = commands.find((candidate) => candidate.id === keyboardActiveCommandId);
+    if (!command) return;
+
+    setCurrentCommand(command);
+    closeEditorModal();
+    sendRequest(command);
+  }
+
+  function isEditableElement(element) {
+    if (!(element instanceof HTMLElement)) return false;
+    if (element === searchInput) return false;
+
+    if (element.isContentEditable) return true;
+
+    const tagName = element.tagName;
+    if (tagName === 'TEXTAREA' || tagName === 'SELECT') return true;
+    if (tagName !== 'INPUT') return false;
+
+    const inputType = String(element.getAttribute('type') || 'text').toLowerCase();
+    return !['button', 'checkbox', 'radio', 'range', 'file', 'submit'].includes(inputType);
+  }
+
+  function shouldHandleCommandListNavigation(target) {
+    if (!target || !(target instanceof HTMLElement)) return false;
+    if (isEditableElement(target)) return false;
+    if (isTagFilterDropdownOpen || !jsonVariableMenu.classList.contains('hidden')) return false;
+    if (!jsonVariableModal.classList.contains('hidden')) return false;
+    if (!variablesModal.classList.contains('hidden')) return false;
+    if (!editorPanel.classList.contains('hidden')) return false;
+    if (target === searchInput) return true;
+    if (commandListEl.contains(target)) return true;
+    if (target === document.body || target === commandListEl) return true;
+    return false;
   }
 
   function setCurrentCommand(cmd) {
@@ -771,6 +895,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   }, true);
 
   document.addEventListener('keydown', (event) => {
+    if ((event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter') && shouldHandleCommandListNavigation(event.target)) {
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!keyboardActiveCommandId) {
+          moveKeyboardActiveCommandToEdge('first');
+        } else {
+          moveKeyboardActiveCommand(1);
+        }
+        return;
+      }
+
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!keyboardActiveCommandId) {
+          moveKeyboardActiveCommandToEdge('last');
+        } else {
+          moveKeyboardActiveCommand(-1);
+        }
+        return;
+      }
+
+      if (event.key === 'Enter' && keyboardActiveCommandId) {
+        event.preventDefault();
+        event.stopPropagation();
+        executeKeyboardActiveCommand();
+        return;
+      }
+    }
+
     if (event.key !== 'Escape') return;
     if (isTagFilterDropdownOpen) {
       setTagFilterDropdownOpen(false);
