@@ -152,7 +152,7 @@ if [[ "$CONFIRM" != [yY] ]]; then
 fi
 
 if ! $INITIAL_RELEASE; then
-  NEW_VERSION="$NEW_VERSION" node --input-type=module -e "import fs from 'node:fs'; const file = 'manifest.json'; const manifest = JSON.parse(fs.readFileSync(file, 'utf8')); manifest.version = process.env.NEW_VERSION; fs.writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`);"
+  NEW_VERSION="$NEW_VERSION" node --input-type=module -e 'import fs from "node:fs"; const file = "manifest.json"; const manifest = JSON.parse(fs.readFileSync(file, "utf8")); manifest.version = process.env.NEW_VERSION; fs.writeFileSync(file, `${JSON.stringify(manifest, null, 2)}\n`);'
 fi
 
 npm test
