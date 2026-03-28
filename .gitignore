@@ -26,6 +26,7 @@ tmp/
 !.env.sample
 
 # Browser extension packaging artifacts and signing keys
+dist/
 *.zip
 *.crx
 *.pem

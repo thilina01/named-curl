@@ -1,0 +1,26 @@
+Named Curl Manual Install
+=========================
+
+This build is distributed as an unpacked Chrome extension.
+
+Install steps:
+
+1. Extract this zip to a local folder.
+2. Open chrome://extensions in Chrome.
+3. Turn on Developer mode using the toggle in the top-right corner.
+4. Click Load unpacked.
+5. Select the extracted folder that contains manifest.json.
+6. The extension should now appear in Chrome. Optionally pin it from the toolbar.
+
+Updating to a newer GitHub release:
+
+1. Download and extract the newer release.
+2. Open chrome://extensions.
+3. Remove the old unpacked copy, or click Reload after replacing the folder contents.
+4. Load the new extracted folder if needed.
+
+Notes:
+
+- This install method is intended for GitHub releases and tester builds.
+- The extension requests access needed to save commands locally and run requests to the endpoints you configure.
+- If Chrome rejects the folder, make sure you selected the directory that directly contains manifest.json.

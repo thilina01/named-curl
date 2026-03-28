@@ -70,8 +70,17 @@ Named Curl is a Chrome extension for saving named HTTP requests, executing them 
 
 ## Publishing
 
+- `scripts/tag.sh`: local version bump and tagging helper for GitHub releases
+- `.github/workflows/release.yml`: tag-driven GitHub Release packaging and publishing workflow
 - `CHROME_WEB_STORE.md`: Chrome Web Store submission notes, permission rationale, and release checklist
 - `PRIVACY.md`: privacy policy draft for hosting before store submission
+
+### GitHub Release Flow
+
+1. Run `./scripts/tag.sh` on `master` with `patch`, `minor`, or `major`.
+2. The script verifies the repo state, updates `manifest.json`, runs tests, commits the version bump, creates an annotated tag, and pushes it.
+3. Pushing a `vX.Y.Z` tag triggers the GitHub workflow.
+4. The workflow validates the tag against `manifest.json`, packages the extension zip with `INSTALL.txt`, generates release notes from the previous tag, and creates the GitHub Release.
 
 ## Notes
 
