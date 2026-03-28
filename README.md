@@ -68,6 +68,11 @@ Named Curl is a Chrome extension for saving named HTTP requests, executing them 
 - `npm run test`: shared-module behavior checks
 - `npm run check`: syntax validation for all refactored ES modules
 
+## Publishing
+
+- `CHROME_WEB_STORE.md`: Chrome Web Store submission notes, permission rationale, and release checklist
+- `PRIVACY.md`: privacy policy draft for hosting before store submission
+
 ## Notes
 
 - The app stores commands in a single canonical header format: arrays of `{ key, value }`.
